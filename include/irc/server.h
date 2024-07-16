@@ -30,6 +30,8 @@
 #include <stdint.h>
 #include <stddef.h>
 
+#define MAX_CLIENTS 3
+#define MSG_BUFSIZE 256
 
 struct server_s {
     struct sockaddr_in server_addr;

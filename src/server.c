@@ -18,6 +18,7 @@
 #include <sys/types.h>
 #include <unistd.h>
 #include <string.h>
+#include <stdlib.h>
 #include <stdio.h>
 
 #include <irc/server.h>
@@ -48,11 +49,32 @@ static void server_recv(struct server_s *self, char *msg, size_t size);
 /**
  * @brief Send message to client.
  * 
- * @param [in] self - given server object pointer. 
+ * @param [in] self - given server object pointer.
  * @param [in] msg - given message to send.
  * @param [in] size - given size of message in bytes.
  */
 static void server_send(struct server_s *self, char *msg, size_t size);
+
+/**
+ * @brief Attach socket to port. 
+ * 
+ * @param [in] self - given server object pointer. 
+ */
+static void server_bind(struct server_s *self);
+
+/**
+ * @brief Prepare to accept connections on socket.
+ * 
+ * @param [in] self - given server object pointer. 
+ */
+static void server_listen(struct server_s *self);
+
+/**
+ * @brief Handle client.
+ * 
+ * @param [in] self - given server object pointer. 
+ */
+static void server_process(struct server_s *self);
 
 
 void server_create(struct server_s *self)
@@ -72,7 +94,16 @@ static void server_init(struct server_s *self)
     self->server_addr.sin_family      = AF_INET;      // address family (IPv4)
     self->server_addr.sin_port        = htons(12345); // port number in network byte order
     self->server_addr.sin_addr.s_addr = htonl(INADDR_LOOPBACK); // 127.0.0.1
-    self->sockfd                      = 0;
+    self->sockfd                      = socket(AF_INET, SOCK_STREAM, 0);
+
+    if (self->sockfd == -1) {
+        perror("server_init: socket initialization error");
+        exit(EXIT_FAILURE);
+    }
+
+    server_bind(self);
+    server_listen(self);
+    server_process(self);
 }
 
 static void server_destroy(struct server_s *self)
@@ -81,16 +112,72 @@ static void server_destroy(struct server_s *self)
     close(self->sockfd);
 }
 
+static void server_bind(struct server_s *self)
+{
+    int32_t ret;
+
+    puts("[SERVER] binding server");
+    ret = bind(self->sockfd, (struct sockaddr *)&(self->server_addr), sizeof(self->server_addr));
+
+    if (ret == -1) {
+        perror("server_bind: bind failed");
+        exit(EXIT_FAILURE);
+    }
+}
+
+static void server_listen(struct server_s *self)
+{
+    int32_t ret;
+
+    puts("[SERVER] listening for clients");
+    ret = listen(self->sockfd, MAX_CLIENTS);
+
+    if (ret == -1) {
+        perror("server_listen: listen failed");
+        exit(EXIT_FAILURE);
+    }
+}
+
 static void server_recv(struct server_s *self, char *msg, size_t size)
 {
-    (void) self;
-    (void) msg;
-    (void) size;
+    ssize_t ret;
+
+    ret = recv(self->sockfd, msg, size, 0);
+
+    if (ret == -1) {
+        perror("server_process: recv error");
+        exit(EXIT_FAILURE);
+    }
 }
 
 static void server_send(struct server_s *self, char *msg, size_t size)
 {
-    (void) self;
-    (void) msg;
-    (void) size;
+    ssize_t ret;
+
+    ret = send(self->sockfd, msg, size, 0);
+
+    if (ret == -1) {
+        perror("server_process: recv error");
+        exit(EXIT_FAILURE);
+    }
+}
+
+static void server_process(struct server_s *self)
+{
+    int32_t clientfd, addrlen;
+    char    buffer[MSG_BUFSIZE];
+    
+    addrlen = sizeof(self->server_addr);
+
+    for (;;) {
+        clientfd = accept(self->sockfd, (struct sockaddr *)&self->server_addr, (socklen_t *)&addrlen);
+
+        if (clientfd == -1) {
+            perror("server_process: accept error");
+            exit(EXIT_FAILURE);
+        }
+
+        server_recv(self, buffer, MSG_BUFSIZE);
+        printf("[SERVER] received \"%s\"\n", buffer);
+    }
 }
