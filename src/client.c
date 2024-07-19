@@ -88,10 +88,8 @@ static void client_init(struct client_s *self)
     self->server_addr.sin_addr.s_addr = htonl(INADDR_LOOPBACK); // 127.0.0.1
     self->sockfd                      = socket(AF_INET, SOCK_STREAM, 0);
 
-    if (self->sockfd == -1) {
-        perror("client: socket initialization error");
-        exit(EXIT_FAILURE);
-    }
+    if (self->sockfd == -1)
+        utils_error("client: socket initialization error");
 
     client_connect(self);
     client_process(self);
@@ -109,10 +107,8 @@ static void client_connect(struct client_s *self)
 
     ret = connect(self->sockfd, (struct sockaddr *)&self->server_addr, sizeof(self->server_addr));
 
-    if (ret == -1) {
-        perror("server: accept error");
-        exit(EXIT_FAILURE);
-    }
+    if (ret == -1)
+        utils_error("server: accept error");
 }
 
 static void client_recv(struct client_s *self, char *msg, size_t size)
@@ -121,10 +117,8 @@ static void client_recv(struct client_s *self, char *msg, size_t size)
 
     ret = recv(self->sockfd, msg, size, 0);
 
-    if (ret == -1) {
-        perror("client: recv error");
-        exit(EXIT_FAILURE);
-    }
+    if (ret == -1)
+        utils_error("client: recv error");
 }
 
 static void client_send(struct client_s *self, char *msg, size_t size)
@@ -133,10 +127,8 @@ static void client_send(struct client_s *self, char *msg, size_t size)
 
     ret = send(self->sockfd, msg, size, 0);
 
-    if (ret == -1) {
-        perror("client: send error");
-        exit(EXIT_FAILURE);
-    }
+    if (ret == -1)
+        utils_error("client: send error");
 }
 
 static void client_process(struct client_s *self)

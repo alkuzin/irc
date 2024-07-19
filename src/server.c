@@ -112,10 +112,8 @@ static void server_init(struct server_s *self)
     self->server_addr.sin_addr.s_addr = htonl(INADDR_LOOPBACK); // 127.0.0.1
     self->sockfd                      = socket(AF_INET, SOCK_STREAM, 0);
 
-    if (self->sockfd == -1) {
-        perror("server: socket initialization error");
-        exit(EXIT_FAILURE);
-    }
+    if (self->sockfd == -1)
+        utils_error("server: socket initialization error");
 
     utils_log(SERVER_TITLE, "%s\n", "[ OK ] initialization successfull");
 
@@ -140,10 +138,8 @@ static void server_bind(struct server_s *self)
 
     ret = bind(self->sockfd, (struct sockaddr *)&(self->server_addr), sizeof(self->server_addr));
 
-    if (ret == -1) {
-        perror("server: bind failed");
-        exit(EXIT_FAILURE);
-    }
+    if (ret == -1)
+        utils_error("server: bind failed");
 
     utils_log(SERVER_TITLE, "%s\n", "[ OK ] binding successfull");
 }
@@ -154,10 +150,8 @@ static void server_listen(struct server_s *self)
 
     ret = listen(self->sockfd, MAX_CLIENTS);
 
-    if (ret == -1) {
-        perror("server: listen failed");
-        exit(EXIT_FAILURE);
-    }
+    if (ret == -1)
+        utils_error("server: listen failed");
 
     utils_log(SERVER_TITLE, "%s\n", "[ OK ] listening successfull");
 }
@@ -168,10 +162,8 @@ static void server_recv(int32_t sockfd, char *msg, size_t size)
 
     ret = recv(sockfd, msg, size, 0);
 
-    if (ret == -1) {
-        perror("server: recv error");
-        exit(EXIT_FAILURE);
-    }
+    if (ret == -1)
+        utils_error("server: recv error");
 }
 
 static void server_send(int32_t sockfd, char *msg, size_t size)
@@ -180,10 +172,8 @@ static void server_send(int32_t sockfd, char *msg, size_t size)
 
     ret = send(sockfd, msg, size, 0);
 
-    if (ret == -1) {
-        perror("server: send error");
-        exit(EXIT_FAILURE);
-    }
+    if (ret == -1)
+        utils_error("server: send error");
 }
 
 static void server_get_ip(struct sockaddr_in *addr, char *buffer)
@@ -207,10 +197,8 @@ static void server_process(struct server_s *self)
     addrlen  = sizeof(self->client_addr);
     clientfd = accept(self->sockfd, (struct sockaddr *)&self->client_addr, (socklen_t *)&addrlen);
     
-    if (clientfd == -1) {
-        perror("server: accept error");
-        exit(EXIT_FAILURE);
-    }
+    if (clientfd == -1)
+        utils_error("server: accept error");
 
     utils_log(SERVER_TITLE, "%s", "connected new client: ");
     server_show_info(&self->client_addr);

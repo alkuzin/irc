@@ -15,6 +15,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>. */
 
 #include <stdint.h>
+#include <stdlib.h>
 #include <stdio.h>
 
 #include <irc/utils.h>
@@ -50,4 +51,10 @@ void utils_log(const char *title, const char *fmt, ...)
     va_start(args, fmt);
 	vprintf(fmt, args);
 	va_end(args);
+}
+
+void utils_error(const char *msg)
+{
+	perror(msg);
+	exit(EXIT_FAILURE);
 }

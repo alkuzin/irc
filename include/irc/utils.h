@@ -45,4 +45,11 @@ void utils_getinput(char *input, uint32_t size);
  */
 void utils_log(const char *title, const char *fmt, ...);
 
+/**
+ * @brief Print fatal error.
+ * 
+ * @param [in] msg - given error message to print.
+ */
+void utils_error(const char *msg);
+
 #endif /* _IRC_UTILS_HPP_ */
