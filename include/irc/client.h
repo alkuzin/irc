@@ -30,7 +30,8 @@
 #include <stdint.h>
 #include <stddef.h>
 
-#define MSG_BUFSIZE 256
+#define CLIENT_TITLE "client"
+#define MSG_BUFSIZE  256
 
 struct client_s {
     struct sockaddr_in server_addr;

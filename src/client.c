@@ -81,7 +81,6 @@ void client_create(struct client_s *self)
 
 static void client_init(struct client_s *self)
 {
-    puts("[CLIENT] initializing client");
     memset(&self->server_addr, 0, sizeof(self->server_addr));
 
     self->server_addr.sin_family      = AF_INET;      // address family (IPv4)
@@ -100,7 +99,7 @@ static void client_init(struct client_s *self)
 
 static void client_destroy(struct client_s *self)
 {
-    puts("[CLIENT] shutdown");
+    utils_log(CLIENT_TITLE, "%s\n", "shutdown");
     close(self->sockfd);
 }
 
@@ -148,12 +147,11 @@ static void client_process(struct client_s *self)
         memset(input, 0, sizeof(input));
 
         printf("%s", ">>> ");
-        getinput(input, MSG_BUFSIZE);
+        utils_getinput(input, MSG_BUFSIZE);
 
         if (!input[0])
             continue;
 
-        printf("[CLIENT] sending \"%s\"\n", input);
         client_send(self, input, sizeof(input));
     }
 }

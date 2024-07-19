@@ -23,6 +23,7 @@
 #include <stdio.h>
 
 #include <irc/server.h>
+#include <irc/utils.h>
 
 /**
  * @brief Initialize IRC server.
@@ -103,7 +104,6 @@ void server_create(struct server_s *self)
 
 static void server_init(struct server_s *self)
 {
-    puts("[SERVER] initializing server");
     memset(&self->server_addr, 0, sizeof(self->server_addr));
     memset(&self->client_addr, 0, sizeof(self->client_addr));
 
@@ -117,8 +117,12 @@ static void server_init(struct server_s *self)
         exit(EXIT_FAILURE);
     }
 
+    utils_log(SERVER_TITLE, "%s\n", "[ OK ] initialization successfull");
+
     server_bind(self);
     server_listen(self);
+
+    putchar('\n');
 
     for (;;)
         server_process(self);
@@ -126,7 +130,7 @@ static void server_init(struct server_s *self)
 
 static void server_destroy(struct server_s *self)
 {
-    puts("[SERVER] shutdown");
+    utils_log(SERVER_TITLE, "%s\n", "shutdown");
     close(self->sockfd);
 }
 
@@ -134,26 +138,28 @@ static void server_bind(struct server_s *self)
 {
     int32_t ret;
 
-    puts("[SERVER] binding server");
     ret = bind(self->sockfd, (struct sockaddr *)&(self->server_addr), sizeof(self->server_addr));
 
     if (ret == -1) {
         perror("server: bind failed");
         exit(EXIT_FAILURE);
     }
+
+    utils_log(SERVER_TITLE, "%s\n", "[ OK ] binding successfull");
 }
 
 static void server_listen(struct server_s *self)
 {
     int32_t ret;
 
-    puts("[SERVER] listening for clients");
     ret = listen(self->sockfd, MAX_CLIENTS);
 
     if (ret == -1) {
         perror("server: listen failed");
         exit(EXIT_FAILURE);
     }
+
+    utils_log(SERVER_TITLE, "%s\n", "[ OK ] listening successfull");
 }
 
 static void server_recv(int32_t sockfd, char *msg, size_t size)
@@ -206,22 +212,22 @@ static void server_process(struct server_s *self)
         exit(EXIT_FAILURE);
     }
 
-    printf("[SERVER] connected new client: ");
+    utils_log(SERVER_TITLE, "%s", "connected new client: ");
     server_show_info(&self->client_addr);
 
-    puts("[SERVER] waiting for client ...");
-
+    utils_log(SERVER_TITLE, "waiting for client (%d)\n", clientfd);
+    
     for (;;) {
         memset(buffer, 0, sizeof(buffer));
         self->recv(clientfd, buffer, sizeof(buffer));
 
         /* handeling incorrect/empty input */
         if (!buffer[0]) {
-            puts("[SERVER] client disconnected");
+            utils_log(SERVER_TITLE, "client (%d) disconnected\n", clientfd);
             close(clientfd);
             return;
         }
 
-        printf("[SERVER] received \"%s\"\n", buffer);
+        utils_log("client", "<%d>: \"%s\"\n", clientfd, buffer);
     }
 }

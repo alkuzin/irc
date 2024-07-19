@@ -26,6 +26,7 @@
 #define _IRC_UTILS_HPP_
 
 #include <stdint.h>
+#include <stdarg.h>
 
 /**
  * @brief Get secure user input.
@@ -33,6 +34,15 @@
  * @param [out] input - given buffer to store input.
  * @param [in] size - given max size of @a input.
  */
-void getinput(char *input, uint32_t size);
+void utils_getinput(char *input, uint32_t size);
+
+/**
+ * @brief Display log message.
+ * 
+ * @param [in] title - given log title.
+ * @param [in] fmt - given format string.
+ * @param [in] ... - given variable number of arguments to print.
+ */
+void utils_log(const char *title, const char *fmt, ...);
 
 #endif /* _IRC_UTILS_HPP_ */

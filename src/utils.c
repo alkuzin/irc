@@ -20,7 +20,7 @@
 #include <irc/utils.h>
 
 
-void getinput(char *input, uint32_t size) 
+void utils_getinput(char *input, uint32_t size) 
 {
 	uint32_t i;
 
@@ -39,4 +39,15 @@ void getinput(char *input, uint32_t size)
                 continue;
         }
     }
+}
+
+void utils_log(const char *title, const char *fmt, ...)
+{
+	va_list args;
+
+    printf("[%s] ", title);
+	
+    va_start(args, fmt);
+	vprintf(fmt, args);
+	va_end(args);
 }
