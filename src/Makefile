@@ -2,7 +2,7 @@ INCLUDE_DIR = ../include/
 CC      	= gcc
 CFLAGS 		= -Wall -Wextra -Werror -g -I $(INCLUDE_DIR)
 
-SRC  = server client
+SRC  = server client utils
 SRCS = $(addsuffix .c, $(SRC))
 OBJS = $(addsuffix .o,   $(SRC))
 
