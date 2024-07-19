@@ -16,6 +16,7 @@
 
 #include <netinet/in.h>
 #include <sys/types.h>
+#include <arpa/inet.h>
 #include <unistd.h>
 #include <string.h>
 #include <stdlib.h>
@@ -40,20 +41,20 @@ static void server_destroy(struct server_s *self);
 /**
  * @brief Receive message from client.
  * 
- * @param [in] self - given server object pointer. 
+ * @param [in] sockfd - given client socket file descriptor.
  * @param [out] msg - given string to store message.
  * @param [in] size - given size of message in bytes.
  */
-static void server_recv(struct server_s *self, char *msg, size_t size);
+static void server_recv(int32_t sockfd, char *msg, size_t size);
 
 /**
  * @brief Send message to client.
  * 
- * @param [in] self - given server object pointer.
+ * @param [in] sockfd - given client socket file descriptor.
  * @param [in] msg - given message to send.
  * @param [in] size - given size of message in bytes.
  */
-static void server_send(struct server_s *self, char *msg, size_t size);
+static void server_send(int32_t sockfd, char *msg, size_t size);
 
 /**
  * @brief Attach socket to port. 
@@ -68,6 +69,21 @@ static void server_bind(struct server_s *self);
  * @param [in] self - given server object pointer. 
  */
 static void server_listen(struct server_s *self);
+
+/**
+ * @brief Get IP address of given structure. 
+ * 
+ * @param [in] addr - given socket address.
+ * @param [out] buffer - given buffer to store IP address string.
+ */
+static void server_get_ip(struct sockaddr_in *addr, char *buffer);
+
+/**
+ * @brief Show IP address & port of given socket address.
+ * 
+ * @param [in] addr - given socket address.
+ */
+static void server_show_info(struct sockaddr_in *addr);
 
 /**
  * @brief Handle client.
@@ -97,13 +113,15 @@ static void server_init(struct server_s *self)
     self->sockfd                      = socket(AF_INET, SOCK_STREAM, 0);
 
     if (self->sockfd == -1) {
-        perror("server_init: socket initialization error");
+        perror("server: socket initialization error");
         exit(EXIT_FAILURE);
     }
 
     server_bind(self);
     server_listen(self);
-    server_process(self);
+
+    for (;;)
+        server_process(self);
 }
 
 static void server_destroy(struct server_s *self)
@@ -120,7 +138,7 @@ static void server_bind(struct server_s *self)
     ret = bind(self->sockfd, (struct sockaddr *)&(self->server_addr), sizeof(self->server_addr));
 
     if (ret == -1) {
-        perror("server_bind: bind failed");
+        perror("server: bind failed");
         exit(EXIT_FAILURE);
     }
 }
@@ -133,51 +151,77 @@ static void server_listen(struct server_s *self)
     ret = listen(self->sockfd, MAX_CLIENTS);
 
     if (ret == -1) {
-        perror("server_listen: listen failed");
+        perror("server: listen failed");
         exit(EXIT_FAILURE);
     }
 }
 
-static void server_recv(struct server_s *self, char *msg, size_t size)
+static void server_recv(int32_t sockfd, char *msg, size_t size)
 {
     ssize_t ret;
 
-    ret = recv(self->sockfd, msg, size, 0);
+    ret = recv(sockfd, msg, size, 0);
 
     if (ret == -1) {
-        perror("server_process: recv error");
+        perror("server: recv error");
         exit(EXIT_FAILURE);
     }
 }
 
-static void server_send(struct server_s *self, char *msg, size_t size)
+static void server_send(int32_t sockfd, char *msg, size_t size)
 {
     ssize_t ret;
 
-    ret = send(self->sockfd, msg, size, 0);
+    ret = send(sockfd, msg, size, 0);
 
     if (ret == -1) {
-        perror("server_process: recv error");
+        perror("server: send error");
         exit(EXIT_FAILURE);
     }
+}
+
+static void server_get_ip(struct sockaddr_in *addr, char *buffer)
+{
+	inet_ntop(AF_INET, &(addr->sin_addr.s_addr), buffer, INET_ADDRSTRLEN);
+}
+
+static void server_show_info(struct sockaddr_in *addr)
+{
+	char ip_addr[INET_ADDRSTRLEN];
+	
+	server_get_ip(addr, ip_addr);
+	printf("(ip: %s port: %u)\n", ip_addr, addr->sin_port);
 }
 
 static void server_process(struct server_s *self)
 {
-    int32_t clientfd, addrlen;
     char    buffer[MSG_BUFSIZE];
+    int32_t clientfd, addrlen;
     
-    addrlen = sizeof(self->server_addr);
+    addrlen  = sizeof(self->client_addr);
+    clientfd = accept(self->sockfd, (struct sockaddr *)&self->client_addr, (socklen_t *)&addrlen);
+    
+    if (clientfd == -1) {
+        perror("server: accept error");
+        exit(EXIT_FAILURE);
+    }
+
+    printf("[SERVER] connected new client: ");
+    server_show_info(&self->client_addr);
+
+    puts("[SERVER] waiting for client ...");
 
     for (;;) {
-        clientfd = accept(self->sockfd, (struct sockaddr *)&self->server_addr, (socklen_t *)&addrlen);
+        memset(buffer, 0, sizeof(buffer));
+        self->recv(clientfd, buffer, sizeof(buffer));
 
-        if (clientfd == -1) {
-            perror("server_process: accept error");
-            exit(EXIT_FAILURE);
+        /* handeling incorrect/empty input */
+        if (!buffer[0]) {
+            puts("[SERVER] client disconnected");
+            close(clientfd);
+            return;
         }
 
-        server_recv(self, buffer, MSG_BUFSIZE);
         printf("[SERVER] received \"%s\"\n", buffer);
     }
 }

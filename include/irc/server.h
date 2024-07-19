@@ -40,8 +40,8 @@ struct server_s {
 
     void (*init)    (struct server_s *self);
     void (*destroy) (struct server_s *self);
-    void (*recv)    (struct server_s *self, char *, size_t);
-    void (*send)    (struct server_s *self, char *, size_t);
+    void (*recv)    (int32_t, char *, size_t);
+    void (*send)    (int32_t, char *, size_t);
 };
 typedef struct server_s server_t;
 
